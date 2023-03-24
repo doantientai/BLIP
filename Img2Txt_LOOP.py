@@ -109,8 +109,12 @@ if __name__ == "__main__":
     text = None
 
     for i in range(n_iter):
-        text, blip_model = generate_caption(pil_image, args.max_len, args.min_len+4, model=blip_model+4)
+        text, blip_model = generate_caption(
+            pil_image, args.max_len, args.min_len + 4, model=blip_model + 4
+        )
         print(text)
         pil_image = resquest_text2img(text)
 
-### example:
+"""Examples: 
+    python Img2Txt_LOOP.py --image /home/tai/Downloads/00000-1857885201.png --max_len 20 --min_len 20
+"""
