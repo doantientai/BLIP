@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "loopimgtxt"
+version = "0.1.0"
+description = ""
+authors = ["tai <t.doan@dental-monitoring.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+transformers = "4.15.0"
+timm = "0.4.12"
+fairscale = "0.4.4"
+Pillow = "^9.4.0"
+opencv-python = "^4.7.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
