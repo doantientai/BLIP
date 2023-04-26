@@ -96,17 +96,19 @@ def display_pil_img(img_pil):
 
     # Convert color space from RGB to BGR
     img_cv2 = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+    
+
 
     # Display image using cv2.imshow()
     # cv2.imshow("Image", img_cv2)
     # cv2.waitKey(0)
-    winname = "Test"
+    # winname = "Test"
 
-    cv2.namedWindow(winname) # Create a named window
-    cv2.moveWindow(winname, 40,30) # Move it to (40,30)
-    cv2.imshow(winname, img_cv2)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
+    # cv2.namedWindow(winname) # Create a named window
+    # cv2.moveWindow(winname, 40,30) # Move it to (40,30)
+    # cv2.imshow(winname, img_cv2)
+    # cv2.waitKey()
+    # cv2.destroyAllWindows()
 
 
     # cv2.waitKey(0)
@@ -132,8 +134,15 @@ if __name__ == "__main__":
 
         print(text)
         pil_image = resquest_text2img(text)
-        display_pil_img(pil_image)
+        # display_pil_img(pil_image)
+        
+        img_np = np.array(pil_image)
+
+        # Convert color space from RGB to BGR
+        img_cv2 = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+        
+        cv2.imwrite(f"output_{i}.png", img_cv2)
 
 """Examples: 
-    python Img2Txt_LOOP.py --image /home/tai/Downloads/00000-1857885201.png --max_len 20 --min_len 20
+    python Img2Txt_LOOP.py --image /home/tai/Downloads/00003-100_k_lms_1029096751_BSRGAN.png --max_len 20 --min_len 20 --iter 20
 """

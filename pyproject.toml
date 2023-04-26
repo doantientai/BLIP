@@ -5,7 +5,7 @@ description = ""
 authors = ["tai <t.doan@dental-monitoring.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.8, <3.9"
 transformers = "4.15.0"
 timm = "0.4.12"
 fairscale = "0.4.4"
