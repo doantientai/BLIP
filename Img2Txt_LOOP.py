@@ -67,11 +67,6 @@ def resquest_text2img(
     response = requests.post(url=f"{server_url}/sdapi/v1/txt2img", json=payload)
     img_str = response.json()["images"]
 
-    # # Decode
-    # img_bytes = base64.b64decode(img_str[0].split(",", 1)[0])
-    # img_array = np.frombuffer(img_bytes, dtype=np.uint8)
-    # res_rgb = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
-
     # Decode
     img_bytes = base64.b64decode(img_str[0].split(",", 1)[0])
     img_file = io.BytesIO(img_bytes)  # convert image to file-like object
@@ -96,6 +91,28 @@ def parse():
     return args
 
 
+def display_pil_img(img_pil):
+    img_np = np.array(img_pil)
+
+    # Convert color space from RGB to BGR
+    img_cv2 = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+
+    # Display image using cv2.imshow()
+    # cv2.imshow("Image", img_cv2)
+    # cv2.waitKey(0)
+    winname = "Test"
+
+    cv2.namedWindow(winname) # Create a named window
+    cv2.moveWindow(winname, 40,30) # Move it to (40,30)
+    cv2.imshow(winname, img_cv2)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
+
+
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+
+
 if __name__ == "__main__":
     args = parse()
 
@@ -110,10 +127,12 @@ if __name__ == "__main__":
 
     for i in range(n_iter):
         text, blip_model = generate_caption(
-            pil_image, args.max_len, args.min_len + 4, model=blip_model + 4
+            pil_image, args.max_len, args.min_len + 4, model=blip_model
         )
+
         print(text)
         pil_image = resquest_text2img(text)
+        display_pil_img(pil_image)
 
 """Examples: 
     python Img2Txt_LOOP.py --image /home/tai/Downloads/00000-1857885201.png --max_len 20 --min_len 20
