@@ -57,14 +57,18 @@ def generate_caption(pil_image, max_length=20, min_length=5, model=None):
 
 
 def resquest_text2img(
-    prompt, step=5, strength=0.45, seed=-1, server_url="http://127.0.0.1:7860"
+    prompt, step=5, strength=0.45, seed=-1, server_url="http://127.0.0.1:7860", negative_prompt = "", sampler_name=""
 ):
+
+    #TODO: use models/Stable-diffusion/mdjrny-v4.ckpt (move other models to another folder)
 
     payload = {
         "prompt": prompt,
         "steps": step,
         "denoising_strength": strength,
         "seed": seed,
+        "negative_prompt": negative_prompt,
+        # "sampler_name": sampler_name
     }
     response = requests.post(url=f"{server_url}/sdapi/v1/txt2img", json=payload)
     img_str = response.json()["images"]
@@ -79,6 +83,7 @@ def resquest_text2img(
 def parse():
     parser = argparse.ArgumentParser()
     parser.add_argument("--text", type=str, help="A text to start")
+    parser.add_argument("--negative_prompt", type=str, help="Things to exclude from photos")
     parser.add_argument("--out_dir", type=str, help="Path to output directory")
     parser.add_argument("--max_len", type=int, default=30, help="Max caption length")
     parser.add_argument("--min_len", type=int, default=10, help="Min caption length")
@@ -160,6 +165,7 @@ if __name__ == "__main__":
     server_url = args.server
     text = args.text
     n_iter = args.iter
+    negative_prompt = args.negative_prompt
 
     ### load first image
     # pil_image = Image.open(image_path).convert("RGB")
@@ -404,9 +410,9 @@ if __name__ == "__main__":
             frame_img = np.zeros((frame_width//2, frame_height, 3))
 
 
-        text = f"{text}, additionally, include the presence of {bible_objects[randint(0, len(bible_objects)-1)]} from the bible"
-        text_with_style = "Describe a scene where " + text + " artistic, realistic, detailed"
-        text_log = f"{i}\t{text}"
+        text_added = f"{text}, with {bible_objects[randint(0, len(bible_objects)-1)]} from the holy bible,"
+        text_with_style = text_added + " artistic, super realistic, highly detailed"
+        text_log = f"{i}\t{text_with_style}"
 
         ### add text to log file
         print(text_log)
@@ -414,7 +420,7 @@ if __name__ == "__main__":
             f.write(text_with_style+"\n")
 
         ### add frame to video
-        frame_txt = text_to_frame(text_log)
+        frame_txt = text_to_frame(text)
         big_frame = np.concatenate((frame_txt, frame_img), axis=1).astype(np.uint8)
 
         # ### DEBUG save image
@@ -425,7 +431,7 @@ if __name__ == "__main__":
             video_output.write(big_frame)
 
         ### generate image
-        pil_image = resquest_text2img(text_with_style)
+        pil_image = resquest_text2img(text_with_style, negative_prompt=negative_prompt)
         
         img_np = np.array(pil_image)
         frame_img = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)        
