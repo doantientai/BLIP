@@ -118,6 +118,42 @@ def display_pil_img(img_pil):
     # cv2.destroyAllWindows()
 
 
+def text_to_frame(phrase):
+    # Create a black frame
+    frame = np.zeros((frame_width//2, frame_height, 3), np.uint8)
+
+    # Split the phrase into multiple lines if necessary
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    text_size, _ = cv2.getTextSize(phrase, font, 1, 2)
+    max_text_width = frame_width//2 - 40  # Leave some margin on the sides
+    if text_size[0] > max_text_width:
+        words = phrase.split()
+        lines = []
+        line = ''
+        for word in words:
+            new_line = line + ' ' + word if line else word
+            new_line_size, _ = cv2.getTextSize(new_line, font, 1, 2)
+            if new_line_size[0] > max_text_width:
+                lines.append(line)
+                line = word
+            else:
+                line = new_line
+        lines.append(line)
+        num_lines = len(lines)
+        line_height = text_size[1] + 10  # Add some spacing between lines
+        text_y = (frame_height - num_lines * line_height) // 2
+        for i, line in enumerate(lines):
+            text_size, _ = cv2.getTextSize(line, font, 1, 2)
+            text_x = (frame_width//2 - text_size[0]) // 2
+            cv2.putText(frame, line, (text_x, text_y + i * line_height), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
+    else:
+        text_x = (frame_width//2 - text_size[0]) // 2
+        text_y = (frame_height + text_size[1]) // 2
+        cv2.putText(frame, phrase, (text_x, text_y), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
+
+    return frame
+
+
 if __name__ == "__main__":
     args = parse()
 
@@ -350,7 +386,11 @@ if __name__ == "__main__":
 
     random.shuffle(bible_objects)
 
-    list_text = []
+    # Define video properties
+    frame_width = 1024
+    frame_height = 512
+    fps = 30
+    frame_duration = int(fps * 1)
 
 
     for i in range(n_iter):
@@ -358,30 +398,62 @@ if __name__ == "__main__":
             dir_save = os.path.join("outputs", str(time()))
             os.makedirs(dir_save, exist_ok=True)
 
-        text = f"{text} {bible_objects[randint(len(bible_objects))]} stunning artwork, highly detailed, realistic"
+            # Create a VideoWriter object to save the video
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Use appropriate codec
+            video_output = cv2.VideoWriter(os.path.join(dir_save, 'output.mp4'), fourcc, fps, (frame_width, frame_height))
+            frame_img = np.zeros((frame_width//2, frame_height, 3))
+
+
+        text = f"{text}, additionally, include the presence of {bible_objects[randint(0, len(bible_objects)-1)]} from the bible"
+        text_with_style = "Describe a scene where " + text + " artistic, realistic, detailed"
         text_log = f"{i}\t{text}"
 
-        pil_image = resquest_text2img(text)
+        ### add text to log file
+        print(text_log)
+        with open(os.path.join(dir_save, "texts.txt"), "a") as f:
+            f.write(text_with_style+"\n")
+
+        ### add frame to video
+        frame_txt = text_to_frame(text_log)
+        big_frame = np.concatenate((frame_txt, frame_img), axis=1).astype(np.uint8)
+
+        # ### DEBUG save image
+        # path_save = os.path.join(dir_save, f"DEBUG_{i}.png")
+        # cv2.imwrite(path_save, big_frame)
+
+        for _ in range(frame_duration):
+            video_output.write(big_frame)
+
+        ### generate image
+        pil_image = resquest_text2img(text_with_style)
         
         img_np = np.array(pil_image)
-        img_cv2 = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)        
+        frame_img = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)        
         
-        
+        ### save image
         path_save = os.path.join(dir_save, f"{i}.png")
-        cv2.imwrite(path_save, img_cv2)
+        cv2.imwrite(path_save, frame_img)
 
+        ### add frame to video
+        big_frame = np.concatenate((frame_txt, frame_img), axis=1).astype(np.uint8)
+        for _ in range(frame_duration):
+            video_output.write(big_frame)
+
+        # ### DEBUG save image
+        # path_save = os.path.join(dir_save, f"DEBUG_{i}.png")
+        # cv2.imwrite(path_save, big_frame)
+
+        
+        ### generate new text for next iteration
         text, blip_model = generate_caption(
             pil_image, args.max_len, args.min_len + 4, model=blip_model
         )
 
-        
-        print(text_log)
-        with open(os.path.join(dir_save, "texts.txt"), "a") as f:
-            f.write(text_log+"\n")
-    
-    
-        
 
+
+                
+    # Release the video writer
+    video_output.release()
 
 """Examples: 
     python Txt2Img_LOOP.py --text "A cat and a dog riding a motorbike together like a superstars" --max_len 20 --min_len 20 --iter 20
